@@ -7,6 +7,8 @@ export const HOST = process.env.NEXT_PUBLIC_HOST ?? "";
 export const NFT_IMAGE_BASE_URL =
   "https://api.dicebear.com/9.x/pixel-art/svg?seed=";
 
+export const DEFAULT_MAX_NFTS_PER_USER = 50;
+
 export const SOMNIA_NATIVE_TOKEN = {
   decimals: 18,
   name: "STT",

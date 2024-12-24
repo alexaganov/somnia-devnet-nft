@@ -4,7 +4,14 @@ import { useReadNftContractEssentialData } from "@/hooks/useReadNftContractEssen
 import clsx from "clsx";
 import { useAccount } from "wagmi";
 
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useForm, useFormContext } from "react-hook-form";
@@ -21,7 +28,8 @@ import { Loader2Icon } from "lucide-react";
 import { useMintNft } from "@/hooks/useMintNft";
 import { toast } from "@/providers/ToastProvider";
 import { NftsCarousel } from "./NftsCarousel";
-import { useRef, useState } from "react";
+import { useRef } from "react";
+import { useConfetti } from "@/providers/ConfettiProvider";
 
 export interface MintNftFormData {
   amount: {
@@ -34,8 +42,10 @@ export interface MintNftFormData {
 export const useMintFormContext = () => useFormContext<MintNftFormData>();
 
 const MintNftFormContent = ({ className }: { className?: string }) => {
+  const confetti = useConfetti();
   const { isConnected } = useAccount();
   const { nativePaymentToken } = useNftContractPaymentTokens();
+  const { data: nftContractEssentialData } = useReadNftContractEssentialData();
 
   const defaultValues = useRef<MintNftFormData>({
     token: nativePaymentToken,
@@ -50,8 +60,6 @@ const MintNftFormContent = ({ className }: { className?: string }) => {
   });
 
   const formData = mintNftForm.watch();
-
-  console.log({ formData });
 
   const { hasEnoughFunds, isAllMinted, mint, isMinting } = useMintNft({
     amount: formData.amount.normalized,
@@ -75,6 +83,8 @@ const MintNftFormContent = ({ className }: { className?: string }) => {
           </>
         ),
       });
+
+      confetti.show(500);
     } catch (error) {
       console.debug({ error });
     }
@@ -85,23 +95,31 @@ const MintNftFormContent = ({ className }: { className?: string }) => {
   let submitButtonLabel = "Mint";
 
   if (isAllMinted) {
-    submitButtonLabel = "NFT Limit Per Account Reached";
+    submitButtonLabel = "All Minted";
   } else if (!hasEnoughFunds) {
     submitButtonLabel = "Insufficient Funds";
   }
 
   return (
-    <Card className={clsx(className)}>
-      <Form {...mintNftForm}>
-        <form onSubmit={handleSubmit}>
-          {/* <CardHeader>
+    <Form {...mintNftForm}>
+      <form className={clsx(className)} onSubmit={handleSubmit}>
+        <Card>
+          <CardHeader>
             <CardTitle>
-              <h2 className="text-xl">Mint Right Now</h2>
+              <h2 className="text-lg font-bold">
+                Mint Somnia Devnet NFTs in an Instant
+              </h2>
             </CardTitle>
-          </CardHeader> */}
-
-          {/* <Separator className="mb-6" /> */}
-
+            <CardDescription>
+              <p className="text-sm text-muted-foreground">
+                Over{" "}
+                <span className="font-bold">
+                  {nftContractEssentialData?.totalMinted ?? BigInt(0)} NFTs
+                </span>{" "}
+                minted so far. Mint yours before&nbsp;it’s&nbsp;too late
+              </p>
+            </CardDescription>
+          </CardHeader>
           <CardContent className="flex gap-5 flex-col">
             {/* NOTE: we are not using useForm({ disabled: isMinting }) because when it's changing whole form resets */}
             <MintNftFormPaymentTokensField disabled={isMinting} />
@@ -130,9 +148,9 @@ const MintNftFormContent = ({ className }: { className?: string }) => {
               <ConnectWalletButton size="lg" className="w-full" />
             )}
           </CardFooter>
-        </form>
-      </Form>
-    </Card>
+        </Card>
+      </form>
+    </Form>
   );
 };
 
@@ -159,7 +177,8 @@ export const MintNftForm = () => {
     return <MintNftFormContent />;
   }
 
-  const minHeightClassName = "min-h-[34.4375rem]";
+  // should be height of the rendered content
+  const minHeightClassName = "min-h-[36.75rem]";
 
   if (isError) {
     <Card

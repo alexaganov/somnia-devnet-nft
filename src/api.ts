@@ -6,7 +6,7 @@ export const getSomniaNetworkStatus = async (): Promise<
 > => {
   try {
     const response = await ky.get("https://dream-rpc.somnia.network/ready", {
-      timeout: 1000,
+      timeout: 5000,
     });
 
     const data: {

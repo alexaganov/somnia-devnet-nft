@@ -3,7 +3,7 @@ import { NFT_CONTRACT, somniaDevnet, TOAST_MESSAGES } from "@/constants";
 import { useReadNftContractAccountData } from "@/hooks/useReadNftContractAccountData";
 import { useReadNftContractEssentialData } from "@/hooks/useReadNftContractEssentialData";
 
-import { getContractErrorMessage } from "@/utils/error";
+import { getWeb3ErrorMessage } from "@/utils/error";
 import { getNftContractTransferredNftsIdsFromLogs } from "@/utils/nft";
 
 import { useMutation } from "@tanstack/react-query";
@@ -21,7 +21,7 @@ import {
   safeNftContractMintWithErc20,
   transformTokensIdsToNfts,
 } from "@/utils/nft";
-import { TransactionToastDescription } from "@/components/common/ToastTransactionDescription";
+import { TransactionToastDescription } from "@/components/common/TransactionToastDescription";
 import { useEnsureChainWithFeedback } from "./useEnsureChainWithFeedback";
 import { useEnsureErc20AllowanceWithFeedback } from "./useEnsureErc20AllowanceWithFeedback";
 import { useEnsureNftPaymentTokenBalanceWithFeedback } from "./useEnsureNftPaymentTokenBalanceWithFeedback";
@@ -118,7 +118,7 @@ const useMintNftWithFeedback = (token: PaymentToken | undefined) => {
 
         return transformTokensIdsToNfts(data);
       } catch (error) {
-        const errorMessage = getContractErrorMessage(error);
+        const errorMessage = getWeb3ErrorMessage(error);
 
         mintToast.error({
           description: txHash ? (

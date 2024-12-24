@@ -68,9 +68,11 @@ export const transformTokensIdsToNfts = (
     };
   });
 };
+
 export const getNftImageUrl = (tokenId: string | number | bigint) => {
   return `${NFT_IMAGE_BASE_URL}${tokenId}`;
 };
+
 export const getNftContractTransferredNftsIdsFromLogs = (
   logs: Log<bigint, number, false>[]
 ) => {

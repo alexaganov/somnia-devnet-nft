@@ -14,7 +14,7 @@ export const useReadNftContractAccountData = (accountAddress?: Address) => {
       enabled: !!accountAddress,
       select(data) {
         const tokensIds = data[0];
-        // NOTE: - 1 because max should not be included in calculation
+        // Subtract 1 because the maximum amount is exclusive (upper limit not included)
         const maxTokensPerUser = Number(data[1]) - 1;
 
         const maxMintAmount = maxTokensPerUser - tokensIds.length;

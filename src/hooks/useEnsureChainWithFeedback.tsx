@@ -1,6 +1,5 @@
 import { createToast } from "@/providers/ToastProvider";
-import { getContractErrorMessage } from "@/utils/error";
-import { transformChainToAddEthereumChainParameter } from "@/utils/web3";
+import { getWeb3ErrorMessage } from "@/utils/error";
 import { useMutation } from "@tanstack/react-query";
 import { Chain } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
@@ -20,13 +19,10 @@ export const useEnsureChainWithFeedback = () => {
       try {
         const switchChainPromise = switchChainAsync({
           chainId: targetChain.id,
-          // NOTE: required parameter otherwise it throws on mobile (MetaMask)
-          addEthereumChainParameter:
-            transformChainToAddEthereumChainParameter(targetChain),
         });
 
         // NOTE: workaround that prompts user to switch chain in the wallet app on mobile devices
-        // timeout allow us to check if user currently on mobile device,
+        // Timeout allow us to check if user currently on mobile device,
         // after that we are showing prompt to make user switch chain in the wallet app
         // On desktop network switches without delays and prompts
         const switchChainResult = await Promise.race([
@@ -56,7 +52,7 @@ export const useEnsureChainWithFeedback = () => {
         return switchedChain;
       } catch (error) {
         switchChainToast.error({
-          description: getContractErrorMessage(error),
+          description: getWeb3ErrorMessage(error),
         });
 
         throw error;

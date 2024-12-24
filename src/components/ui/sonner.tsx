@@ -7,13 +7,10 @@ import { Toaster as Sonner } from "sonner";
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  // const { theme = "system" } = useTheme();
-
   return (
     <Sonner
       theme="light"
-      // richColors
-      className="toaster !top-[--header-height] container group"
+      className="toaster !top-[calc(var(--header-height)+0.5rem)] container group"
       offset={10}
       position="top-center"
       invert={false}

@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { toast } from "./ToastProvider";
-import { getContractErrorMessage } from "@/utils/error";
+import { getWeb3ErrorMessage } from "@/utils/error";
 
 const ChainManager = ({ children }: { children?: ReactNode }) => {
   const { disconnect, isPending: isDisconnecting } = useDisconnect();
@@ -69,7 +69,7 @@ const ChainManager = ({ children }: { children?: ReactNode }) => {
         toast.error("Couldn't switch chain", {
           description: (
             <>
-              Error: {getContractErrorMessage(error)}.
+              Error: {getWeb3ErrorMessage(error)}.
               <br />
               Try to disconnect and connect again.
             </>

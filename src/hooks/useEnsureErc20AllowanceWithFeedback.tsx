@@ -1,4 +1,4 @@
-import { TransactionToastDescription } from "@/components/common/ToastTransactionDescription";
+import { TransactionToastDescription } from "@/components/common/TransactionToastDescription";
 import { TOAST_MESSAGES } from "@/constants";
 import { createToast, toast } from "@/providers/ToastProvider";
 import { PaymentTokenErc20 } from "@/types/web3";
@@ -7,7 +7,7 @@ import {
   readErc20ContractAllowanceDetails,
   safeIncreaseErc20Allowance,
 } from "@/utils/erc20";
-import { getContractErrorMessage } from "@/utils/error";
+import { getWeb3ErrorMessage } from "@/utils/error";
 import { formatToken } from "@/utils/web3";
 import { useMutation } from "@tanstack/react-query";
 import { Address, Chain, erc20Abi, Hash, parseEventLogs } from "viem";
@@ -121,7 +121,7 @@ export const useEnsureErc20AllowanceWithFeedback = () => {
           ),
         });
       } catch (error) {
-        const errorMessage = getContractErrorMessage(error);
+        const errorMessage = getWeb3ErrorMessage(error);
 
         allowanceToast.error({
           description: txHash ? (

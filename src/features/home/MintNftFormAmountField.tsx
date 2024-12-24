@@ -11,6 +11,8 @@ import { useReadNftContractAccountData } from "@/hooks/useReadNftContractAccount
 import { useReadNftContractEssentialData } from "@/hooks/useReadNftContractEssentialData";
 import { clamp } from "@/utils";
 import { useAccount } from "wagmi";
+import { DEFAULT_MAX_NFTS_PER_USER } from "@/constants";
+import { Button } from "@/components/ui/button";
 
 export const useNftMintAmountClamp = () => {
   const { address } = useAccount();
@@ -23,7 +25,8 @@ export const useNftMintAmountClamp = () => {
     : 1;
   const maxMintAmount = accountNftContractData
     ? accountNftContractData.maxMintAmount
-    : nftContractEssentialData?.maxNftAmountPerUser || 50;
+    : nftContractEssentialData?.maxNftAmountPerUser ??
+      DEFAULT_MAX_NFTS_PER_USER;
 
   const clampAmount = useCallback(
     (value?: number) => {
@@ -64,10 +67,28 @@ const MintNftFormAmountField = ({
       name="amount"
       render={({ field: { value, onChange, onBlur, name, ref, disabled } }) => {
         const clampedValue = clampAmount(value.raw);
+        const isMaxed = clampedValue === maxMintAmount;
 
         return (
           <FormItem>
-            <FormLabel>Amount</FormLabel>
+            <div className="flex items-center justify-between">
+              <FormLabel className="font-bold">Number of NFTs</FormLabel>
+              <Button
+                disabled={disabledFromRoot || disabled || isMaxed}
+                size="2xs"
+                type="button"
+                variant="secondary"
+                onClick={() =>
+                  onChange({
+                    raw: maxMintAmount,
+                    normalized: maxMintAmount,
+                  })
+                }
+              >
+                {isMaxed && "Maxed!"}
+                {!isMaxed && <>MAX ({maxMintAmount})</>}
+              </Button>
+            </div>
             <FormControl>
               <AmountField
                 value={value?.raw}

@@ -10,12 +10,16 @@ export const useReadNftContractEssentialData = () => {
   return useReadContracts({
     query: {
       select(data) {
+        const currentNftId = data[4];
+
         return {
-          maxNftAmountPerUser: Number(data[0]),
+          // Subtract 1 because the maximum amount is exclusive (upper limit not included)
+          maxNftAmountPerUser: Number(data[0]) - 1,
           mintPricePerNft: data[1],
           nftImageBaseUri: data[2],
           paymentErc20Address: data[3],
-          totalMinted: data[4],
+          currentNftId,
+          totalMinted: currentNftId - BigInt(1),
         };
       },
     },

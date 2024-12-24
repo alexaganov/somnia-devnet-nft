@@ -1,7 +1,6 @@
 import { createToast, toast } from "@/providers/ToastProvider";
 import { Erc20TestAbi } from "@/types/abi/Erc20Test";
 import { useMutation } from "@tanstack/react-query";
-import { Address } from "viem";
 import { useAccount, useConfig } from "wagmi";
 import {
   simulateContract,
@@ -9,10 +8,12 @@ import {
   writeContract,
 } from "wagmi/actions";
 
-import { TransactionToastDescription } from "@/components/common/ToastTransactionDescription";
-import { getContractErrorMessage } from "@/utils/error";
+import { TransactionToastDescription } from "@/components/common/TransactionToastDescription";
+import { getWeb3ErrorMessage } from "@/utils/error";
 import { somniaDevnet, TOAST_MESSAGES } from "@/constants";
 import { useEnsureChainWithFeedback } from "./useEnsureChainWithFeedback";
+import { formatToken } from "@/utils/web3";
+import { PaymentTokenErc20 } from "@/types/web3";
 
 export const useMintErc20TestWithFeedback = () => {
   const config = useConfig();
@@ -26,7 +27,7 @@ export const useMintErc20TestWithFeedback = () => {
       token,
     }: {
       amount: bigint;
-      token: Address;
+      token: PaymentTokenErc20;
     }) => {
       if (!address) {
         const errorMessage = "Wallet is not connect";
@@ -40,15 +41,17 @@ export const useMintErc20TestWithFeedback = () => {
 
       await ensureChainWithFeedback(chain);
 
-      const mintToast = createToast("Minting Token");
+      const mintToast = createToast(
+        `Minting ${formatToken(amount, token.meta)}`
+      );
 
       mintToast.loading({
-        description: "Checking Essential Data",
+        description: "Checking if transaction is possible",
       });
 
       try {
         const txSimulation = await simulateContract(config, {
-          address: token,
+          address: token.contract,
           abi: Erc20TestAbi,
           functionName: "mint",
           args: [address, amount],
@@ -57,6 +60,7 @@ export const useMintErc20TestWithFeedback = () => {
         mintToast.loading({
           description: TOAST_MESSAGES.CONFIRM_TX_IN_WALLET,
         });
+
         const txHash = await writeContract(config, txSimulation.request);
 
         mintToast.loading({
@@ -86,7 +90,7 @@ export const useMintErc20TestWithFeedback = () => {
         return receipt;
       } catch (error) {
         mintToast.error({
-          description: getContractErrorMessage(error),
+          description: getWeb3ErrorMessage(error),
         });
 
         throw error;

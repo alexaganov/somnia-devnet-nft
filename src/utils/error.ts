@@ -26,7 +26,7 @@ export const getErrorShortMessage = (error: unknown): string | null => {
 
   return null;
 };
-export const getContractErrorMessage = (error: unknown) => {
+export const getWeb3ErrorMessage = (error: unknown) => {
   return (
     getErrorShortMessage(error) ||
     getErrorMessage(error) ||
