@@ -35,7 +35,7 @@ export const TransactionToastDescription = ({
           })}
           onClick={() => copyToClipboard(txHash)}
           variant="outline"
-          size="iconXs"
+          size="iconSm"
         >
           <CopyIcon />
         </Button>
@@ -43,7 +43,7 @@ export const TransactionToastDescription = ({
           className="flex-shrink-0"
           asChild
           variant="outline"
-          size="iconXs"
+          size="iconSm"
         >
           <a
             target="_blank"

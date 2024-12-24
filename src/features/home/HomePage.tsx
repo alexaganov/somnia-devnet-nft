@@ -2,7 +2,6 @@
 
 import { useReadNftContractAccountData } from "@/hooks/useReadNftContractAccountData";
 import { useReadNftContractEssentialData } from "@/hooks/useReadNftContractEssentialData";
-import { getNftImageUrl } from "@/utils/nft";
 import React, { useMemo } from "react";
 import { Address } from "viem";
 
@@ -16,6 +15,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useAccount } from "wagmi";
+import { getNftImageUrl } from "@/utils/nft";
 
 export const HomePage = () => {
   const { address } = useAccount();
@@ -37,7 +37,7 @@ export const HomePage = () => {
   }, [nftContractEssentialData]);
 
   return (
-    <div className="container grid h-[calc(100vh-var(--header-height))] lg:grid-cols-[20rem_1fr_20rem] gap-4 pb-16 pt-10">
+    <div className="container grid h-[calc(100vh-var(--header-height))] lg:grid-cols-[1fr_1fr] gap-4 pb-16 pt-10">
       <div className="w-full">
         <Card className="pb-0 w-full">
           <CardHeader>
@@ -74,10 +74,23 @@ export const HomePage = () => {
               })}
             </ul>
           </div>
+
+          <div className="bg-secondary rounded-lg h-[400px] overflow-auto">
+            <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(80px,100%),1fr))] gap-2">
+              {nftSlots.map((slot) => {
+                return (
+                  <li
+                    key={slot.id}
+                    className="border-card bg-neutral-100 aspect-square border rounded-full"
+                  ></li>
+                );
+              })}
+            </ul>
+          </div>
         </Card>
       </div>
 
-      <div className="flex-[1_1_0] w-full min-h-[15rem]">
+      {/* <div className="flex-[1_1_0] col-span-1 row-span-2 w-full min-h-[15rem]">
         <Card className="h-full flex flex-col w-full">
           <CardHeader>
             <CardTitle>
@@ -98,7 +111,7 @@ export const HomePage = () => {
             </ul>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       <div className="w-full">
         <MintNftForm />

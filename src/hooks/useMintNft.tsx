@@ -1,344 +1,167 @@
 "use client";
-import { NFT_CONTRACT, somniaDevnet } from "@/constants";
+import { NFT_CONTRACT, somniaDevnet, TOAST_MESSAGES } from "@/constants";
 import { useReadNftContractAccountData } from "@/hooks/useReadNftContractAccountData";
 import { useReadNftContractEssentialData } from "@/hooks/useReadNftContractEssentialData";
 
-import { safeAsync, shortenIdentifier } from "@/utils";
-import { getExplorerUrl } from "@/utils/web3";
 import { getContractErrorMessage } from "@/utils/error";
 import { getNftContractTransferredNftsIdsFromLogs } from "@/utils/nft";
 
 import { useMutation } from "@tanstack/react-query";
-import React, { ReactNode } from "react";
-import { Address, Hash, InsufficientFundsError } from "viem";
+import React from "react";
+import { Address, Chain, Hash } from "viem";
 import { useAccount, useConfig } from "wagmi";
-import { switchChain, waitForTransactionReceipt } from "wagmi/actions";
+import { waitForTransactionReceipt } from "wagmi/actions";
 
-import { Button } from "@/components/ui/button";
-import { NftPaymentToken } from "@/hooks/useNftContractPaymentTokens";
-import useNftContractPaymentTokenBalance from "@/hooks/useNftContractPaymentTokenBalance";
-import {
-  readErc20ContractAllowanceDetails,
-  safeIncreaseErc20Allowance,
-} from "@/utils/erc20";
-import { createToast } from "@/providers/ToastProvider";
+import { PaymentToken } from "@/types/web3";
+import usePaymentTokenBalance from "@/hooks/usePaymentTokenBalance";
+
+import { createToast, toast } from "@/providers/ToastProvider";
 import {
   safeNftContractMintNative,
   safeNftContractMintWithErc20,
   transformTokensIdsToNfts,
 } from "@/utils/nft";
 import { TransactionToastDescription } from "@/components/common/ToastTransactionDescription";
+import { useEnsureChainWithFeedback } from "./useEnsureChainWithFeedback";
+import { useEnsureErc20AllowanceWithFeedback } from "./useEnsureErc20AllowanceWithFeedback";
+import { useEnsureNftPaymentTokenBalanceWithFeedback } from "./useEnsureNftPaymentTokenBalanceWithFeedback";
 
 interface MintNftParams {
   amount: number;
-  token: NftPaymentToken;
+  token: PaymentToken;
 }
 
-export const useMintNft = () => {
+const useMintNftWithFeedback = (token: PaymentToken | undefined) => {
   const config = useConfig();
   const { address } = useAccount();
+  const { refetch: refetchNftContractAccountData } =
+    useReadNftContractAccountData(address);
 
   const {
-    data: nftContractEssentialData,
-    refetch: refetchNftContractEssentialData,
-  } = useReadNftContractEssentialData();
+    native: { refetch: refetchNativeTokenBalance },
+    erc20: { refetch: refetchErc20TokenBalance },
+  } = usePaymentTokenBalance(address as Address, token);
 
-  const { variables, mutateAsync, isPending, data } = useMutation({
-    mutationFn: async ({ amount, token }: MintNftParams) => {
-      const requiredDataVerificationToast = createToast(
-        "Verification of Required Information"
+  return useMutation({
+    mutationFn: async ({
+      totalPrice,
+      amount,
+      chain,
+      token,
+    }: {
+      chain: Chain;
+      totalPrice: bigint;
+      amount: number;
+      token: PaymentToken;
+    }) => {
+      if (!address) {
+        throw new Error("Wallet is not connected");
+      }
+
+      const mintToast = createToast(
+        `Minting ${amount} NFT${amount === 1 ? "" : "s"}`
       );
 
-      const chain = await switchChain(config, {
-        chainId: somniaDevnet.id,
-      });
-
-      console.log({ chain });
-
-      if (!address || !chain) {
-        const reason = "Wallet is not connected";
-
-        requiredDataVerificationToast.error({
-          description: <>Error: {reason}</>,
-        });
-
-        throw new Error(reason);
-      }
-
-      requiredDataVerificationToast.loading({
-        description:
-          "We're currently verifying the required details to proceed with minting. Please hold on for a moment",
-      });
-
-      const { data: freshNftContractEssentialData } =
-        await refetchNftContractEssentialData();
-
-      if (!freshNftContractEssentialData) {
-        const reason = "Unable to Access NFT Contract Data.";
-
-        requiredDataVerificationToast.error({
-          description: (
-            <>
-              Error: {reason}
-              <br />
-              We encountered an issue reading the necessary data from the NFT
-              contract to proceed with minting. Please try again later. If the
-              issue persists, contact support for assistance.
-            </>
-          ),
-        });
-
-        throw new Error(reason);
-      }
-
-      // if (!connector) {
-      //   return;
-      // }
-
-      // const switchedChain = await connector.?.({
-      //   chainId: somniaDevnet.id,
-      //   addEthereumChainParameter: {
-      //     iconUrls: ["https://assets.reown.com/reown-profile-pic.png"],
-      //     blockExplorerUrls: [somniaDevnet.blockExplorers?.default.url],
-      //     chainName: somniaDevnet.name,
-      //     nativeCurrency: somniaDevnet.nativeCurrency,
-      //     rpcUrls: somniaDevnet.rpcUrls.default.http,
-      //   },
-      // });
-      // const switchedChain = await switchChainAsync({
-      //   connector,
-      // });
-
-      // console.log({ switchedChain });
-
-      // const switchedChain = await switchChainAsync({
-      //   chainId: somniaDevnet.id,
-      // });
-
-      // console.log({ switchedChain });
-
-      // try {
-      //   await connectWallet();
-      // } catch (error) {
-      //   // TODO: show toast
-      //   console.log({ error, message: "not connected" });
-
-      //   return;
-      // }
-
-      const { data: freshTokenBalance } = await refetchTokenBalance();
-
-      if (!freshTokenBalance) {
-        const reason = "Unable to Retrieve Account Balance.";
-
-        requiredDataVerificationToast.error({
-          description: (
-            <>
-              Error: {reason}
-              <br />
-              We couldn't retrieve the latest account balance. Please try again
-              later. If the issue persists, contact support for assistance.
-            </>
-          ),
-        });
-
-        throw new Error(reason);
-      }
-
-      const totalMintPrice =
-        BigInt(amount) * freshNftContractEssentialData.mintPricePerNft;
-
-      if (totalMintPrice > freshTokenBalance.value) {
-        requiredDataVerificationToast.error({
-          description: (
-            <>
-              Error: Insufficient Balance
-              <br />
-              You don't have enough funds in your account to proceed. Please
-              check your balance or deposit additional funds before trying again
-            </>
-          ),
-        });
-
-        throw new InsufficientFundsError();
-      }
-
-      if (token.type === "native") {
-        requiredDataVerificationToast.success({
-          description: "All required details have been successfully verified.",
-        });
-      } else if (token.type === "erc20") {
-        const [allowanceDetailsError, allowanceDetails] = await safeAsync(
-          readErc20ContractAllowanceDetails(config, {
-            token: token.contract,
-            account: address,
-            requiredAmount: totalMintPrice,
-            spender: NFT_CONTRACT.address,
-          })
-        );
-
-        if (allowanceDetailsError) {
-          requiredDataVerificationToast.error({
-            description:
-              "Error: We couldn't verify user allowance information. Please try again later.",
-          });
-
-          throw allowanceDetailsError;
-        }
-
-        requiredDataVerificationToast.success({
-          description: "All required details have been successfully verified.",
-        });
-
-        if (!allowanceDetails.hasRequiredAllowance) {
-          const allowanceToast = createToast("Allowance Increase");
-
-          allowanceToast.loading({
-            description:
-              "Waiting for you to approve the allowance increase in your wallet. This is required to proceed with the minting process.",
-          });
-
-          const [increaseAllowanceError, allowanceTxHash] = await safeAsync(
-            safeIncreaseErc20Allowance(config, {
-              spender: NFT_CONTRACT.address,
-              token: token.contract,
-              // NOTE: we should pass the whole amount
-              allowance: allowanceDetails.requiredAllowance,
-            })
-          );
-
-          if (increaseAllowanceError) {
-            allowanceToast.error({
-              description: (
-                <>Error: {getContractErrorMessage(increaseAllowanceError)}</>
-              ),
-            });
-
-            throw increaseAllowanceError;
-          }
-
-          allowanceToast.loading({
-            description: (
-              <TransactionToastDescription
-                chain={chain}
-                description="Transaction submitted! Waiting for confirmation."
-                txHash={allowanceTxHash}
-              />
-            ),
-          });
-
-          const [transactionError] = await safeAsync(
-            waitForTransactionReceipt(config, {
-              hash: allowanceTxHash,
-            })
-          );
-
-          if (transactionError) {
-            allowanceToast.error({
-              description: (
-                <TransactionToastDescription
-                  chain={chain}
-                  description={getContractErrorMessage(transactionError)}
-                  txHash={allowanceTxHash}
-                />
-              ),
-            });
-
-            throw transactionError;
-          }
-
-          allowanceToast.success({
-            description: (
-              <TransactionToastDescription
-                chain={chain}
-                description="Transaction Confirmed!"
-                txHash={allowanceTxHash}
-              />
-            ),
-          });
-        }
-      }
-
-      const mintToast = createToast("Minting");
-
       mintToast.loading({
-        description: "Waiting for user to approve the minting.",
+        description: "Please approve transaction in your wallet.",
       });
 
-      const mintNativePromise =
-        token.type === "native"
-          ? safeNftContractMintNative(config, {
-              amount,
-              totalPrice: totalMintPrice,
-            })
-          : safeNftContractMintWithErc20(config, {
-              amount,
-            });
+      let txHash: Hash | null = null;
 
-      const [mintTxError, mintTxHash] = await safeAsync(mintNativePromise);
+      try {
+        const mintNativePromise =
+          token.type === "native"
+            ? safeNftContractMintNative(config, {
+                amount,
+                totalPrice,
+              })
+            : safeNftContractMintWithErc20(config, {
+                amount,
+              });
 
-      if (mintTxError) {
-        mintToast.error({
-          description: getContractErrorMessage(mintTxError),
-        });
+        txHash = await mintNativePromise;
 
-        throw mintTxError;
-      }
-
-      mintToast.loading({
-        description: (
-          <TransactionToastDescription
-            chain={chain}
-            description="Transaction submitted! Waiting for confirmation."
-            txHash={mintTxHash}
-          />
-        ),
-      });
-
-      const [mintTxReceiptError, mintTxReceipt] = await safeAsync(
-        waitForTransactionReceipt(config, {
-          hash: mintTxHash,
-        })
-      );
-
-      if (mintTxReceiptError) {
-        mintToast.error({
+        mintToast.loading({
           description: (
             <TransactionToastDescription
               chain={chain}
-              description={getContractErrorMessage(mintTxReceiptError)}
-              txHash={mintTxHash}
+              description={TOAST_MESSAGES.TX_PENDING}
+              txHash={txHash}
             />
           ),
         });
 
-        throw mintTxReceiptError;
+        // will also update gas price in case of erc20
+        refetchNativeTokenBalance();
+
+        if (token.type === "erc20") {
+          refetchErc20TokenBalance();
+        }
+
+        const txReceipt = await waitForTransactionReceipt(config, {
+          hash: txHash,
+        });
+
+        refetchNftContractAccountData();
+
+        const data = getNftContractTransferredNftsIdsFromLogs(txReceipt.logs);
+
+        mintToast.success({
+          description: (
+            <TransactionToastDescription
+              chain={chain}
+              description={TOAST_MESSAGES.TX_CONFIRMED}
+              txHash={txHash}
+            />
+          ),
+        });
+
+        return transformTokensIdsToNfts(data);
+      } catch (error) {
+        const errorMessage = getContractErrorMessage(error);
+
+        mintToast.error({
+          description: txHash ? (
+            <TransactionToastDescription
+              chain={chain}
+              description={`Error: ${errorMessage}`}
+              txHash={txHash}
+            />
+          ) : (
+            errorMessage
+          ),
+        });
+
+        throw error;
       }
-
-      const data = getNftContractTransferredNftsIdsFromLogs(mintTxReceipt.logs);
-
-      mintToast.success({
-        description: (
-          <TransactionToastDescription
-            chain={chain}
-            description="Transaction Confirmed!"
-            txHash={mintTxHash}
-          />
-        ),
-      });
-
-      return transformTokensIdsToNfts(data);
     },
   });
+};
+
+export const useMintNft = ({ token, amount }: MintNftParams) => {
+  const { address } = useAccount();
+
+  const { mutateAsync: ensuresChainWithFeedback } =
+    useEnsureChainWithFeedback();
+  const { mutateAsync: ensureAllowanceWithFeedback } =
+    useEnsureErc20AllowanceWithFeedback();
+
+  const { data: nftContractEssentialData } = useReadNftContractEssentialData();
 
   const { data: nftContractAccountData } =
     useReadNftContractAccountData(address);
-  const totalMintPrice = variables
-    ? BigInt(variables.amount) *
-      (nftContractEssentialData?.mintPricePerNft ?? BigInt(0))
-    : BigInt(0);
-  const { data: tokenBalance, refetch: refetchTokenBalance } =
-    useNftContractPaymentTokenBalance(address as Address, variables?.token);
+
+  const {
+    activeToken: { data: tokenBalance },
+  } = usePaymentTokenBalance(address as Address, token);
+
+  const { mutateAsync: mintNftWithFeedback } = useMintNftWithFeedback(token);
+
+  const { mutateAsync: ensureNftPaymentTokenBalanceWithFeedback } =
+    useEnsureNftPaymentTokenBalanceWithFeedback(address, token);
+
+  const totalMintPrice =
+    BigInt(amount) * (nftContractEssentialData?.mintPricePerNft ?? BigInt(0));
 
   const hasEnoughFunds = tokenBalance
     ? tokenBalance.value > totalMintPrice
@@ -346,18 +169,43 @@ export const useMintNft = () => {
 
   const isAllMinted = !!nftContractAccountData?.isAllMinted;
 
-  // useEffect(() => {
-  //   switchChain({
-  //     chainId: somniaDevnet.id,
-  //     addEthereumChainParameter: {
-  //       iconUrls: ["https://assets.reown.com/reown-profile-pic.png"],
-  //       blockExplorerUrls: [somniaDevnet.blockExplorers?.default.url],
-  //       chainName: somniaDevnet.name,
-  //       nativeCurrency: somniaDevnet.nativeCurrency,
-  //       rpcUrls: somniaDevnet.rpcUrls.default.http,
-  //     },
-  //   });
-  // }, [address, switchChain]);
+  const { variables, mutateAsync, isPending, data } = useMutation({
+    mutationFn: async () => {
+      if (!address) {
+        const reason = "Wallet is not connected";
+
+        toast.error(reason);
+
+        throw new Error(reason);
+      }
+
+      const chain = somniaDevnet;
+
+      await ensuresChainWithFeedback(chain);
+
+      await ensureNftPaymentTokenBalanceWithFeedback({
+        amount: totalMintPrice,
+      });
+
+      if (token.type === "erc20") {
+        await ensureAllowanceWithFeedback({
+          chain,
+          amount: totalMintPrice,
+          spender: NFT_CONTRACT.address,
+          token,
+        });
+      }
+
+      const data = mintNftWithFeedback({
+        chain,
+        totalPrice: totalMintPrice,
+        token,
+        amount,
+      });
+
+      return data;
+    },
+  });
 
   return {
     hasEnoughFunds,

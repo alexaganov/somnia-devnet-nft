@@ -61,7 +61,6 @@ export const MintNftFormReceipt = () => {
           </div>
         </AccordionTrigger>
         <AccordionContent className="pb-0 border-t bg-secondary">
-          {/* <Separator /> */}
           <ul className="flex px-6 py-4 flex-col gap-1.5">
             {receiptList.map(({ id, label, content }) => {
               return (

@@ -1,7 +1,7 @@
 import { Address, erc20Abi } from "viem";
 import { useReadContracts } from "wagmi";
 
-export const useERC20TokenBalance = (
+export const useErc20TokenBalance = (
   accountAddress?: Address,
   contractAddress?: Address
 ) => {

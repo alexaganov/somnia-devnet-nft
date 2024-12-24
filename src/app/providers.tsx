@@ -6,6 +6,7 @@ import { cookieToInitialState, WagmiProvider, type Config } from "wagmi";
 import { config, projectId } from "@/lib/wagmi";
 import { ToastProvider } from "@/providers/ToastProvider";
 import { ConnectKitProvider } from "connectkit";
+import ChainManager from "@/providers/ChainManager";
 
 // Set up queryClient
 // const queryClient = new QueryClient();
@@ -56,7 +57,9 @@ const Providers = ({
     <ToastProvider>
       <WagmiProvider initialState={initialState} config={config}>
         <QueryClientProvider client={queryClient}>
-          <ConnectKitProvider>{children}</ConnectKitProvider>
+          <ConnectKitProvider>
+            <ChainManager>{children}</ChainManager>
+          </ConnectKitProvider>
         </QueryClientProvider>
       </WagmiProvider>
     </ToastProvider>

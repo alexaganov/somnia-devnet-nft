@@ -15,6 +15,7 @@ export const useReadNftContractEssentialData = () => {
           mintPricePerNft: data[1],
           nftImageBaseUri: data[2],
           paymentErc20Address: data[3],
+          totalMinted: data[4],
         };
       },
     },
@@ -35,6 +36,10 @@ export const useReadNftContractEssentialData = () => {
       {
         ...NFT_CONTRACT,
         functionName: "paymentERC20",
+      },
+      {
+        ...NFT_CONTRACT,
+        functionName: "tokenId",
       },
     ],
   });

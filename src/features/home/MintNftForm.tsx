@@ -1,176 +1,66 @@
 "use client";
-import { useReadNftContractAccountData } from "@/hooks/useReadNftContractAccountData";
 import { useReadNftContractEssentialData } from "@/hooks/useReadNftContractEssentialData";
 
-import { getNftImageUrl } from "@/utils/nft";
-
 import clsx from "clsx";
-import { Address } from "viem";
 import { useAccount } from "wagmi";
 
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { useForm, useFormContext } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { ErrorState } from "@/components/common/ErrorState";
 import { MintNftFormPaymentTokensField } from "./MintNftFormPaymentTokensField";
-import {
-  NftPaymentToken,
-  useNftContractPaymentTokens,
-} from "@/hooks/useNftContractPaymentTokens";
+import { useNftContractPaymentTokens } from "@/hooks/useNftContractPaymentTokens";
+import { PaymentToken } from "@/types/web3";
 import MintNftFormAmountField from "./MintNftFormAmountField";
 import MintNftFormReceipt from "./MintNftFormReceipt";
 import { ConnectWalletButton } from "@/components/common/ConnectWaletButton";
-import useNftContractPaymentTokenBalance from "@/hooks/useNftContractPaymentTokenBalance";
 
 import { Loader2Icon } from "lucide-react";
 import { useMintNft } from "@/hooks/useMintNft";
 import { toast } from "@/providers/ToastProvider";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import { NftData } from "@/types/nft";
-
-// const MintItTokenButton = () => {
-//   const { writeContract, data: hash } = useWriteContract();
-
-//   const { data: receipt } = useWaitForTransactionReceipt({
-//     query: {
-//       enabled: false,
-//     },
-//     hash,
-//   });
-
-//   // console.log({ hash, receipt });
-
-//   const handleClick = async () => {
-//     writeContract({
-//       ...INSOMNIA_TOKEN_CONTRACT,
-//       functionName: "mint",
-//       args: [BigInt(1)],
-//     });
-//   };
-
-//   return <button onClick={handleClick}>Mint IT</button>;
-// };
+import { NftsCarousel } from "./NftsCarousel";
+import { useRef, useState } from "react";
 
 export interface MintNftFormData {
   amount: {
     raw?: number;
     normalized: number;
   };
-  token: NftPaymentToken;
+  token: PaymentToken;
 }
 
 export const useMintFormContext = () => useFormContext<MintNftFormData>();
 
-const NftsCarousel = ({ nfts, size }: { nfts: NftData[]; size: number }) => {
-  return (
-    <Carousel className="flex flex-col -mx-4 gap-2">
-      <CarouselContent contentClassName="m-0" className="px-3">
-        {nfts.map(({ id, imageUrl }) => {
-          return (
-            <CarouselItem
-              style={{
-                flexBasis: `${100 / size}%`,
-              }}
-              key={id}
-              className="p-0"
-            >
-              <div className="px-1">
-                <Card className="items-end aspect-square flex justify-center">
-                  <img
-                    alt={`NFT #${id}`}
-                    className="size-[90%]"
-                    src={getNftImageUrl(imageUrl)}
-                  />
-                </Card>
-              </div>
-            </CarouselItem>
-          );
-        })}
-      </CarouselContent>
-
-      {nfts.length > size && (
-        <div className="w-full flex gap-2 justify-center">
-          <CarouselPrevious className="relative transform-none inset-0" />
-          <CarouselNext className="relative transform-none inset-0" />
-        </div>
-      )}
-    </Carousel>
-  );
-};
-
 const MintNftFormContent = ({ className }: { className?: string }) => {
-  const { address, isConnected } = useAccount();
-  const { paymentTokens } = useNftContractPaymentTokens();
+  const { isConnected } = useAccount();
+  const { nativePaymentToken } = useNftContractPaymentTokens();
 
-  const { refetch: refetchNftContractAccountData } =
-    useReadNftContractAccountData(address as Address);
-
-  const { hasEnoughFunds, isAllMinted, mint, isMinting } = useMintNft();
-
-  // const defaultValues = useMemo(() => {
-  //   return {
-  //     amount: {
-  //       normalized: lastMintNftParams?.amount ?? 1,
-  //       raw: lastMintNftParams?.amount ?? 1
-  //     },
-  //     token: lastMintNftParams?.token ?? paymentTokens[0]
-  //   } as MintNftFormData
-  // }, [lastMintNftParams, paymentTokens[0]])
+  const defaultValues = useRef<MintNftFormData>({
+    token: nativePaymentToken,
+    amount: {
+      raw: 1,
+      normalized: 1,
+    },
+  }).current;
 
   const mintNftForm = useForm<MintNftFormData>({
-    defaultValues: {
-      token: paymentTokens[0],
-      amount: {
-        raw: 1,
-        normalized: 1,
-      },
-    },
+    defaultValues,
   });
 
   const formData = mintNftForm.watch();
 
-  const { refetch: refetchAccountBalance } = useNftContractPaymentTokenBalance(
-    address,
-    formData.token
-  );
+  console.log({ formData });
 
-  // useEffect(() => {
-  //   toast("Congratulations on Your Minted NFTs!", {
-  //     duration: Infinity,
-  //     closeButton: true,
-  //     description: (
-  //       <>
-  //         <p className="mb-2">
-  //           Your NFTs have been successfully minted and are ready for you to
-  //           explore.
-  //         </p>
-  //         <NftsCarousel size={4} nfts={} />
-  //       </>
-  //     ),
-  //   });
-  // }, []);
+  const { hasEnoughFunds, isAllMinted, mint, isMinting } = useMintNft({
+    amount: formData.amount.normalized,
+    token: formData.token,
+  });
 
-  const handleSubmit = mintNftForm.handleSubmit(async (data) => {
+  const handleSubmit = mintNftForm.handleSubmit(async () => {
     try {
-      const mintdNfts = await mint({
-        amount: data.amount.normalized,
-        token: data.token,
-      });
+      const mintedNfts = await mint();
 
       toast("Congratulations on Your Minted NFTs!", {
         duration: Infinity,
@@ -181,12 +71,10 @@ const MintNftFormContent = ({ className }: { className?: string }) => {
               Your NFTs have been successfully minted and are ready for you to
               explore.
             </p>
-            <NftsCarousel size={4} nfts={mintdNfts} />
+            <NftsCarousel size={4} nfts={mintedNfts} />
           </>
         ),
       });
-
-      Promise.all([refetchNftContractAccountData(), refetchAccountBalance()]);
     } catch (error) {
       console.debug({ error });
     }
@@ -206,13 +94,13 @@ const MintNftFormContent = ({ className }: { className?: string }) => {
     <Card className={clsx(className)}>
       <Form {...mintNftForm}>
         <form onSubmit={handleSubmit}>
-          <CardHeader>
+          {/* <CardHeader>
             <CardTitle>
               <h2 className="text-xl">Mint Right Now</h2>
             </CardTitle>
-          </CardHeader>
+          </CardHeader> */}
 
-          <Separator className="mb-6" />
+          {/* <Separator className="mb-6" /> */}
 
           <CardContent className="flex gap-5 flex-col">
             {/* NOTE: we are not using useForm({ disabled: isMinting }) because when it's changing whole form resets */}

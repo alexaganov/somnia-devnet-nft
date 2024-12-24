@@ -1,35 +1,24 @@
-import { TokenMetadata } from "@/types/web3";
-import { Address } from "viem";
+import { PaymentToken } from "@/types/web3";
 import { useReadNftContractEssentialData } from "./useReadNftContractEssentialData";
-import { useERC20Token } from "./useERC20Token";
+import { useErc20Token } from "./useErc20Token";
 import { useMemo } from "react";
 import { SOMNIA_NATIVE_TOKEN } from "@/constants";
 
-export type NftPaymentToken = {
-  id: string;
-  meta: TokenMetadata;
-} & (
-  | {
-      type: "native";
-      contract?: undefined;
-    }
-  | {
-      type: "erc20";
-      contract: Address;
-    }
-);
+const nativePaymentToken: PaymentToken = {
+  id: "native",
+  type: "native",
+  meta: SOMNIA_NATIVE_TOKEN,
+};
 
 export const useNftContractPaymentTokens = () => {
   const { data: nftContractEssentialData } = useReadNftContractEssentialData();
 
-  const erc20TokenQuery = useERC20Token(
+  const erc20TokenQuery = useErc20Token(
     nftContractEssentialData?.paymentErc20Address
   );
 
   const paymentTokens = useMemo(() => {
-    const result: NftPaymentToken[] = [
-      { id: "native", type: "native", meta: SOMNIA_NATIVE_TOKEN },
-    ];
+    const result: PaymentToken[] = [nativePaymentToken];
 
     if (erc20TokenQuery.data && nftContractEssentialData) {
       result.push({
@@ -44,6 +33,7 @@ export const useNftContractPaymentTokens = () => {
   }, [nftContractEssentialData, erc20TokenQuery.data]);
 
   return {
+    nativePaymentToken,
     paymentTokens,
     query: erc20TokenQuery,
   };

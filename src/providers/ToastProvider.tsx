@@ -45,7 +45,7 @@ export const createToast = (
         id,
         dismissible: true,
         closeButton: true,
-        duration: 3000,
+        duration: 10_000,
         ...data,
         ...defaults,
       });

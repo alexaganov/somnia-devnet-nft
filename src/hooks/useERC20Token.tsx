@@ -2,7 +2,7 @@ import { TokenMetadata } from "@/types/web3";
 import { Address, erc20Abi } from "viem";
 import { useReadContracts } from "wagmi";
 
-export const useERC20Token = (contractAddress?: Address) => {
+export const useErc20Token = (contractAddress?: Address) => {
   return useReadContracts({
     query: {
       enabled: !!contractAddress,

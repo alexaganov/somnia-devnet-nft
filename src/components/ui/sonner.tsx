@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 // import { useTheme } from "next-themes";
 import { Toaster as Sonner } from "sonner";
 
@@ -11,16 +12,19 @@ const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
       theme="light"
+      // richColors
       className="toaster !top-[--header-height] container group"
       offset={10}
       position="top-center"
       invert={false}
-      richColors
       toastOptions={{
         classNames: {
           content: "flex-1 min-w-0",
-          toast:
+          toast: cn(
             "group right-2.5 items-start toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
+            "group-[.toaster]:data-[type=success]:text-[--success-text]",
+            "group-[.toaster]:data-[type=error]:text-[--error-text]"
+          ),
           description: "group-[.toast]:text-muted-foreground",
           icon: "mt-0.5",
           actionButton:

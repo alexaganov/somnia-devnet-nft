@@ -114,6 +114,11 @@ export const Erc20TestAbi = [
     "name": "mint",
     "inputs": [
       {
+        "name": "account",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
         "name": "amount",
         "type": "uint256",
         "internalType": "uint256"
