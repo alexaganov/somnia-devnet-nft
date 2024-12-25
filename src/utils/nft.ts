@@ -58,19 +58,23 @@ export const safeNftContractMintWithErc20 = async (
 };
 
 export const transformTokensIdsToNfts = (
-  tokensIds: readonly bigint[]
+  tokensIds: readonly bigint[],
+  baseImageUrl?: string
 ): NftData[] => {
   return tokensIds.map((tokenId) => {
     return {
       id: tokenId.toString(),
       tokenId,
-      imageUrl: getNftImageUrl(tokenId),
+      imageUrl: getNftImageUrl(tokenId, baseImageUrl),
     };
   });
 };
 
-export const getNftImageUrl = (tokenId: string | number | bigint) => {
-  return `${NFT_IMAGE_BASE_URL}${tokenId}`;
+export const getNftImageUrl = (
+  tokenId: string | number | bigint,
+  baseUrl = NFT_IMAGE_BASE_URL
+) => {
+  return `${baseUrl}${tokenId}`;
 };
 
 export const getNftContractTransferredNftsIdsFromLogs = (

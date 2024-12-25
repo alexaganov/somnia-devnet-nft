@@ -34,6 +34,7 @@ interface MintNftParams {
 const useMintNftWithFeedback = (token: PaymentToken | undefined) => {
   const config = useConfig();
   const { address } = useAccount();
+  const { data: nftContractEssentialData } = useReadNftContractEssentialData();
   const { refetch: refetchNftContractAccountData } =
     useReadNftContractAccountData(address);
 
@@ -116,7 +117,10 @@ const useMintNftWithFeedback = (token: PaymentToken | undefined) => {
           ),
         });
 
-        return transformTokensIdsToNfts(data);
+        return transformTokensIdsToNfts(
+          data,
+          nftContractEssentialData?.nftImageBaseUri
+        );
       } catch (error) {
         const errorMessage = getWeb3ErrorMessage(error);
 

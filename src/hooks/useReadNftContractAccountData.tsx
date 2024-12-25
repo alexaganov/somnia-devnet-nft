@@ -14,6 +14,7 @@ export const useReadNftContractAccountData = (accountAddress?: Address) => {
       enabled: !!accountAddress,
       select(data) {
         const tokensIds = data[0];
+        const baseTokenImageUri = data[2];
         // Subtract 1 because the maximum amount is exclusive (upper limit not included)
         const maxTokensPerUser = Number(data[1]) - 1;
 
@@ -21,7 +22,7 @@ export const useReadNftContractAccountData = (accountAddress?: Address) => {
         const minMintAmount = Math.min(maxMintAmount, 1);
 
         return {
-          nfts: transformTokensIdsToNfts(tokensIds),
+          nfts: transformTokensIdsToNfts(tokensIds, baseTokenImageUri),
           maxMintAmount,
           minMintAmount,
           isAllMinted: tokensIds.length >= maxTokensPerUser,
@@ -38,6 +39,10 @@ export const useReadNftContractAccountData = (accountAddress?: Address) => {
       {
         ...NFT_CONTRACT,
         functionName: "MAX_TOKENS_PER_USER",
+      },
+      {
+        ...NFT_CONTRACT,
+        functionName: "baseURI",
       },
     ],
   });

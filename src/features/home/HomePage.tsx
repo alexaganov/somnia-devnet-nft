@@ -87,7 +87,7 @@ export const HomePage = () => {
 
       <div
         aria-hidden="true"
-        className="select-none font-mono text-muted-foreground my-10"
+        className="select-none font-mono opacity-20 my-10"
       >
         ***
       </div>
@@ -98,7 +98,7 @@ export const HomePage = () => {
 
       <div
         aria-hidden="true"
-        className="select-none font-mono text-muted-foreground my-10"
+        className="select-none font-mono opacity-20 my-10"
       >
         ***
       </div>

@@ -123,7 +123,8 @@ const MintNftFormContent = ({ className }: { className?: string }) => {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex gap-5 flex-col">
-            {/* NOTE: we are not using useForm({ disabled: isMinting }) because when it's changing whole form resets */}
+            {/* NOTE: we are not using useForm({ disabled: isMinting }) because when disabled
+            changes whole form resets which we don't want */}
             <MintNftFormPaymentTokensField disabled={isMinting} />
             <MintNftFormAmountField disabled={isMinting} />
           </CardContent>
@@ -160,17 +161,15 @@ export const MintNftForm = () => {
   const nftContractEssentialDataQuery = useReadNftContractEssentialData();
   const { erc20Query } = useNftContractPaymentTokens();
 
+  // checking erc20Query.isLoading because even if query failed
+  // it should not affect overall functionality of the form and user can use native token
   const isDataLoaded =
-    !!nftContractEssentialDataQuery.data && !!erc20Query.data;
-  const isError = erc20Query.isError || nftContractEssentialDataQuery.isError;
+    !!nftContractEssentialDataQuery.data && !erc20Query.isLoading;
+  const isError = nftContractEssentialDataQuery.isError;
 
   const refetch = () => {
     if (!nftContractEssentialDataQuery.data) {
       nftContractEssentialDataQuery.refetch();
-    }
-
-    if (!erc20Query.data) {
-      erc20Query.refetch();
     }
   };
 
