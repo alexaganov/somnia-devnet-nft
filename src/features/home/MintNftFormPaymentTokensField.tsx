@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/form";
 import { useMintFormContext } from "./MintNftForm";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ComponentPropsWithRef } from "react";
+import { ComponentPropsWithRef, ReactNode, useMemo } from "react";
 import clsx from "clsx";
 import { useAccount } from "wagmi";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,16 +15,19 @@ import { PaymentToken } from "@/types/web3";
 import usePaymentTokenBalance from "@/hooks/usePaymentTokenBalance";
 import { formatToken } from "@/utils/web3";
 import { MintErc20Button } from "./MintErc20Button";
+import { GetNativeButton } from "./GetNativeTokensButton";
 
 type PaymentTokenOptionProps = ComponentPropsWithRef<typeof FormItem> & {
   token: PaymentToken;
   value: string;
+  action: ReactNode;
 };
 
 const PaymentTokenOption = ({
   token,
   className,
   value,
+  action,
   ...props
 }: PaymentTokenOptionProps) => {
   const { address } = useAccount();
@@ -56,9 +59,7 @@ const PaymentTokenOption = ({
             <Skeleton className="w-10">&nbsp;</Skeleton>
           )}
           {!tokenBalance && !isLoading && <>N/A</>}
-          {token.type === "erc20" && (
-            <MintErc20Button className="ml-auto" token={token} />
-          )}
+          {action && <div className="ml-auto">{action}</div>}
         </div>
       </FormLabel>
     </FormItem>
@@ -66,12 +67,33 @@ const PaymentTokenOption = ({
 };
 
 export const MintNftFormPaymentTokensField = ({
-  disabled: disabledFromRoot,
+  disabled,
 }: {
   disabled?: boolean;
 }) => {
   const { control } = useMintFormContext();
-  const { paymentTokens } = useNftContractPaymentTokens();
+  const { erc20, native } = useNftContractPaymentTokens();
+
+  const options = useMemo(() => {
+    const result: {
+      token: PaymentToken;
+      action?: ReactNode;
+    }[] = [
+      {
+        token: native,
+        action: <GetNativeButton />,
+      },
+    ];
+
+    if (erc20) {
+      result.push({
+        token: erc20,
+        action: <MintErc20Button token={erc20} />,
+      });
+    }
+
+    return result;
+  }, [erc20, native]);
 
   return (
     <FormField
@@ -83,22 +105,23 @@ export const MintNftFormPaymentTokensField = ({
             <FormLabel className="font-bold">Payment Token</FormLabel>
             <FormControl>
               <RadioGroup
-                disabled={disabledFromRoot || field.disabled}
+                disabled={disabled || field.disabled}
                 name={field.name}
                 defaultValue={field.value.id}
                 onValueChange={(value) =>
                   field.onChange(
-                    paymentTokens.find((token) => token.id === value)
+                    options.find((option) => option.token.id === value)?.token
                   )
                 }
                 className="flex flex-col gap-2"
               >
-                {paymentTokens.map((paymentToken) => {
+                {options.map(({ token, action }) => {
                   return (
                     <PaymentTokenOption
-                      value={paymentToken.id}
-                      key={paymentToken.id}
-                      token={paymentToken}
+                      value={token.id}
+                      key={token.id}
+                      token={token}
+                      action={action}
                     />
                   );
                 })}

@@ -90,7 +90,7 @@ export const MintErc20Button = ({
       </PopoverTrigger>
       <PopoverContent
         sideOffset={20}
-        className="w-[17rem] flex flex-col gap-4 mx-5"
+        className="w-[17rem] flex flex-col gap-3 mx-5"
       >
         <header className="flex justify-between">
           <p className="text-sm flex items-center font-bold leading-none">
@@ -98,7 +98,12 @@ export const MintErc20Button = ({
           </p>
 
           <PopoverClose asChild>
-            <Button type="button" variant="secondary" size="iconSm">
+            <Button
+              type="button"
+              className="-mt-2 -mr-2"
+              variant="secondary"
+              size="iconSm"
+            >
               <XIcon />
             </Button>
           </PopoverClose>
@@ -108,6 +113,7 @@ export const MintErc20Button = ({
           variant="outline"
           value={selectedOptionId}
           onValueChange={(value) => {
+            // makes it impossible to unselect single option
             if (value) {
               setSelectedOptionsId(value);
             }

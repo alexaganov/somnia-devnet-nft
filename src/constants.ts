@@ -4,6 +4,8 @@ import { Address, Chain } from "viem";
 
 export const HOST = process.env.NEXT_PUBLIC_HOST ?? "";
 
+export const SOMNIA_DEVNET_TEST_HOST = "https://devnet.somnia.network";
+
 export const NFT_IMAGE_BASE_URL =
   "https://api.dicebear.com/9.x/pixel-art/svg?seed=";
 

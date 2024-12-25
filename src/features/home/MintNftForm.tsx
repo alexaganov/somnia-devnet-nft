@@ -44,7 +44,7 @@ export const useMintFormContext = () => useFormContext<MintNftFormData>();
 const MintNftFormContent = ({ className }: { className?: string }) => {
   const confetti = useConfetti();
   const { isConnected } = useAccount();
-  const { nativePaymentToken } = useNftContractPaymentTokens();
+  const { native: nativePaymentToken } = useNftContractPaymentTokens();
   const { data: nftContractEssentialData } = useReadNftContractEssentialData();
 
   const defaultValues = useRef<MintNftFormData>({
@@ -116,7 +116,9 @@ const MintNftFormContent = ({ className }: { className?: string }) => {
                 <span className="font-bold">
                   {nftContractEssentialData?.totalMinted ?? BigInt(0)} NFTs
                 </span>{" "}
-                minted so far. Mint yours before&nbsp;it’s&nbsp;too late
+                have been successfully minted so far
+                <br />
+                Mint yours before&nbsp;it’s&nbsp;too late
               </p>
             </CardDescription>
           </CardHeader>
@@ -156,20 +158,19 @@ const MintNftFormContent = ({ className }: { className?: string }) => {
 
 export const MintNftForm = () => {
   const nftContractEssentialDataQuery = useReadNftContractEssentialData();
-  const { query: paymentTokensQuery } = useNftContractPaymentTokens();
+  const { erc20Query } = useNftContractPaymentTokens();
 
   const isDataLoaded =
-    !!nftContractEssentialDataQuery.data && !!paymentTokensQuery.data;
-  const isError =
-    paymentTokensQuery.isError || nftContractEssentialDataQuery.isError;
+    !!nftContractEssentialDataQuery.data && !!erc20Query.data;
+  const isError = erc20Query.isError || nftContractEssentialDataQuery.isError;
 
   const refetch = () => {
     if (!nftContractEssentialDataQuery.data) {
       nftContractEssentialDataQuery.refetch();
     }
 
-    if (!paymentTokensQuery.data) {
-      paymentTokensQuery.refetch();
+    if (!erc20Query.data) {
+      erc20Query.refetch();
     }
   };
 

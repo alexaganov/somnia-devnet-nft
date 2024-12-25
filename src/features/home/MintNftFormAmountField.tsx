@@ -85,7 +85,7 @@ const MintNftFormAmountField = ({
                   })
                 }
               >
-                {isMaxed && "Maxed!"}
+                {isMaxed && "MAXED!"}
                 {!isMaxed && <>MAX ({maxMintAmount})</>}
               </Button>
             </div>

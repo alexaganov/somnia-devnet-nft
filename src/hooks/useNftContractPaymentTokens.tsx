@@ -1,4 +1,4 @@
-import { PaymentToken } from "@/types/web3";
+import { PaymentToken, PaymentTokenErc20 } from "@/types/web3";
 import { useReadNftContractEssentialData } from "./useReadNftContractEssentialData";
 import { useErc20Token } from "./useErc20Token";
 import { useMemo } from "react";
@@ -13,28 +13,28 @@ const nativePaymentToken: PaymentToken = {
 export const useNftContractPaymentTokens = () => {
   const { data: nftContractEssentialData } = useReadNftContractEssentialData();
 
-  const erc20TokenQuery = useErc20Token(
+  const erc20Query = useErc20Token(
     nftContractEssentialData?.paymentErc20Address
   );
 
-  const paymentTokens = useMemo(() => {
-    const result: PaymentToken[] = [nativePaymentToken];
-
-    if (erc20TokenQuery.data && nftContractEssentialData) {
-      result.push({
-        id: "erc20",
-        type: "erc20",
-        contract: nftContractEssentialData.paymentErc20Address,
-        meta: erc20TokenQuery.data,
-      });
+  const erc20 = useMemo(() => {
+    if (!erc20Query.data || !nftContractEssentialData?.paymentErc20Address) {
+      return;
     }
 
+    const result: PaymentTokenErc20 = {
+      id: "erc20",
+      type: "erc20",
+      contract: nftContractEssentialData.paymentErc20Address,
+      meta: erc20Query.data,
+    };
+
     return result;
-  }, [nftContractEssentialData, erc20TokenQuery.data]);
+  }, [erc20Query.data, nftContractEssentialData]);
 
   return {
-    nativePaymentToken,
-    paymentTokens,
-    query: erc20TokenQuery,
+    native: nativePaymentToken,
+    erc20,
+    erc20Query,
   };
 };

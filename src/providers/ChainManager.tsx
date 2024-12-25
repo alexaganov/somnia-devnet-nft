@@ -16,6 +16,9 @@ import { Loader2 } from "lucide-react";
 import { toast } from "./ToastProvider";
 import { getWeb3ErrorMessage } from "@/utils/error";
 
+// NOTE: we also can use ConnectKit's enforceSupportedChains: true, but for some reason
+// it doesn't redirect user to the wallet and there's no clear instruction what to do in
+// the modal that appears when network is wrong
 const ChainManager = ({ children }: { children?: ReactNode }) => {
   const { disconnect, isPending: isDisconnecting } = useDisconnect();
   const { address, isReconnecting, chain } = useAccount();
