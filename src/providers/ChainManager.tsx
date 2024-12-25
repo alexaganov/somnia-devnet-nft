@@ -69,12 +69,16 @@ const ChainManager = ({ children }: { children?: ReactNode }) => {
 
         setShouldSwitchChainInWallet(false);
       } catch (error) {
+        handleSwitchChain();
+
         toast.error("Couldn't switch chain", {
+          duration: Infinity,
           description: (
             <>
               Error: {getWeb3ErrorMessage(error)}.
               <br />
-              Try to disconnect and connect again.
+              We've sent another request to your wallet. If nothing happens,
+              please try to disconnect and connect again.
             </>
           ),
         });
