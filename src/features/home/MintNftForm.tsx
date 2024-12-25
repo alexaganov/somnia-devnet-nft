@@ -116,9 +116,9 @@ const MintNftFormContent = ({ className }: { className?: string }) => {
                 <span className="font-bold">
                   {nftContractEssentialData?.totalMinted ?? BigInt(0)} NFTs
                 </span>{" "}
-                have been successfully minted so far
+                have been successfully minted&nbsp;so far.
                 <br />
-                Mint yours before&nbsp;it’s&nbsp;too late
+                Mint yours before&nbsp;it’s&nbsp;too late.
               </p>
             </CardDescription>
           </CardHeader>
