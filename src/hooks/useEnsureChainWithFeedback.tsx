@@ -1,17 +1,44 @@
-import { createToast } from "@/providers/ToastProvider";
+import { somniaDevnet } from "@/constants";
+import { createToast, toast } from "@/providers/ToastProvider";
 import { getWeb3ErrorMessage } from "@/utils/error";
 import { useMutation } from "@tanstack/react-query";
-import { Chain } from "viem";
+import { Address, Chain } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
 
-export const useEnsureChainWithFeedback = () => {
+export const useEnsureChainAndAccountWithFeedback = () => {
+  const { address } = useAccount();
   const { chain } = useAccount();
   const { switchChainAsync } = useSwitchChain();
 
   return useMutation({
-    mutationFn: async (targetChain: Chain) => {
+    mutationFn: async ({
+      chain: targetChain = somniaDevnet,
+      account = address,
+    }: { chain?: Chain; account?: Address } = {}): Promise<{
+      account: Address;
+      chain: Chain;
+    }> => {
+      if (!account) {
+        const errorMessage = "Wallet is not connect";
+
+        toast.error(errorMessage);
+
+        throw new Error(errorMessage);
+      }
+
+      if (address !== account) {
+        const errorMessage = `Wrong wallet is connected. Please connect ${account}`;
+
+        toast.error(errorMessage);
+
+        throw new Error(errorMessage);
+      }
+
       if (chain && chain.id === targetChain.id) {
-        return chain;
+        return {
+          account,
+          chain,
+        };
       }
 
       const switchChainToast = createToast("Switch Chain");
@@ -35,7 +62,10 @@ export const useEnsureChainWithFeedback = () => {
         ]);
 
         if (switchChainResult) {
-          return switchChainResult;
+          return {
+            chain: switchChainResult,
+            account,
+          };
         }
 
         switchChainToast.loading({
@@ -49,7 +79,10 @@ export const useEnsureChainWithFeedback = () => {
           description: "Success!",
         });
 
-        return switchedChain;
+        return {
+          account,
+          chain: switchedChain,
+        };
       } catch (error) {
         switchChainToast.error({
           description: getWeb3ErrorMessage(error),

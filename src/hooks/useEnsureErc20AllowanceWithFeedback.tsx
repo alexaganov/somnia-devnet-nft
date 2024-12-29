@@ -13,6 +13,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Address, Chain, erc20Abi, Hash, parseEventLogs } from "viem";
 import { useAccount, useBalance, useConfig } from "wagmi";
 import { waitForTransactionReceipt } from "wagmi/actions";
+import { useEnsureChainAndAccountWithFeedback } from "./useEnsureChainWithFeedback";
 
 export const useEnsureErc20AllowanceWithFeedback = () => {
   const config = useConfig();
@@ -20,6 +21,9 @@ export const useEnsureErc20AllowanceWithFeedback = () => {
   const { refetch: refetchBalance } = useBalance({
     address,
   });
+
+  const { mutateAsync: ensureChainAndAccountWithFeedback } =
+    useEnsureChainAndAccountWithFeedback();
 
   return useMutation({
     mutationFn: async ({
@@ -33,14 +37,15 @@ export const useEnsureErc20AllowanceWithFeedback = () => {
       amount: bigint;
       spender: Address;
     }) => {
-      if (!address) {
-        throw new Error("Wallet is not connected");
-      }
+      const { account } = await ensureChainAndAccountWithFeedback({
+        chain,
+        account: address,
+      });
 
       const [allowanceDetailsError, allowanceDetails] = await safeAsync(
         readErc20ContractAllowanceDetails(config, {
           token: token.contract,
-          account: address,
+          account,
           requiredAmount: amount,
           spender,
         })

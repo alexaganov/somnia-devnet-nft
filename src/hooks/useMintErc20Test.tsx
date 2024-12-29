@@ -1,7 +1,7 @@
-import { createToast, toast } from "@/providers/ToastProvider";
+import { createToast } from "@/providers/ToastProvider";
 import { Erc20TestAbi } from "@/types/abi/Erc20Test";
 import { useMutation } from "@tanstack/react-query";
-import { useAccount, useConfig } from "wagmi";
+import { useConfig } from "wagmi";
 import {
   simulateContract,
   waitForTransactionReceipt,
@@ -10,16 +10,15 @@ import {
 
 import { TransactionToastDescription } from "@/components/common/TransactionToastDescription";
 import { getWeb3ErrorMessage } from "@/utils/error";
-import { somniaDevnet, TOAST_MESSAGES } from "@/constants";
-import { useEnsureChainWithFeedback } from "./useEnsureChainWithFeedback";
+import { TOAST_MESSAGES } from "@/constants";
+import { useEnsureChainAndAccountWithFeedback } from "./useEnsureChainWithFeedback";
 import { formatToken } from "@/utils/web3";
 import { PaymentTokenErc20 } from "@/types/web3";
 
 export const useMintErc20TestWithFeedback = () => {
   const config = useConfig();
-  const { address } = useAccount();
-
-  const { mutateAsync: ensureChainWithFeedback } = useEnsureChainWithFeedback();
+  const { mutateAsync: ensureChainAndAccountWithFeedback } =
+    useEnsureChainAndAccountWithFeedback();
 
   return useMutation({
     mutationFn: async ({
@@ -29,17 +28,7 @@ export const useMintErc20TestWithFeedback = () => {
       amount: bigint;
       token: PaymentTokenErc20;
     }) => {
-      if (!address) {
-        const errorMessage = "Wallet is not connect";
-
-        toast.error(errorMessage);
-
-        throw new Error(errorMessage);
-      }
-
-      const chain = somniaDevnet;
-
-      await ensureChainWithFeedback(chain);
+      const { account, chain } = await ensureChainAndAccountWithFeedback({});
 
       const mintToast = createToast(
         `Minting ${formatToken(amount, token.meta)}`
@@ -54,7 +43,7 @@ export const useMintErc20TestWithFeedback = () => {
           address: token.contract,
           abi: Erc20TestAbi,
           functionName: "mint",
-          args: [address, amount],
+          args: [account, amount],
         });
 
         mintToast.loading({

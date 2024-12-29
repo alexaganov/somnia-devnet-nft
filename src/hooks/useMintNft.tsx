@@ -1,5 +1,5 @@
 "use client";
-import { NFT_CONTRACT, somniaDevnet, TOAST_MESSAGES } from "@/constants";
+import { NFT_CONTRACT, TOAST_MESSAGES } from "@/constants";
 import { useReadNftContractAccountData } from "@/hooks/useReadNftContractAccountData";
 import { useReadNftContractEssentialData } from "@/hooks/useReadNftContractEssentialData";
 
@@ -15,14 +15,14 @@ import { waitForTransactionReceipt } from "wagmi/actions";
 import { PaymentToken } from "@/types/web3";
 import usePaymentTokenBalance from "@/hooks/usePaymentTokenBalance";
 
-import { createToast, toast } from "@/providers/ToastProvider";
+import { createToast } from "@/providers/ToastProvider";
 import {
   safeNftContractMintNative,
   safeNftContractMintWithErc20,
   transformTokensIdsToNfts,
 } from "@/utils/nft";
 import { TransactionToastDescription } from "@/components/common/TransactionToastDescription";
-import { useEnsureChainWithFeedback } from "./useEnsureChainWithFeedback";
+import { useEnsureChainAndAccountWithFeedback } from "./useEnsureChainWithFeedback";
 import { useEnsureErc20AllowanceWithFeedback } from "./useEnsureErc20AllowanceWithFeedback";
 import { useEnsureNftPaymentTokenBalanceWithFeedback } from "./useEnsureNftPaymentTokenBalanceWithFeedback";
 
@@ -145,8 +145,8 @@ const useMintNftWithFeedback = (token: PaymentToken | undefined) => {
 export const useMintNft = ({ token, amount }: MintNftParams) => {
   const { address } = useAccount();
 
-  const { mutateAsync: ensuresChainWithFeedback } =
-    useEnsureChainWithFeedback();
+  const { mutateAsync: ensuresChainAndAccountWithFeedback } =
+    useEnsureChainAndAccountWithFeedback();
   const { mutateAsync: ensureAllowanceWithFeedback } =
     useEnsureErc20AllowanceWithFeedback();
 
@@ -175,17 +175,7 @@ export const useMintNft = ({ token, amount }: MintNftParams) => {
 
   const { variables, mutateAsync, isPending, data } = useMutation({
     mutationFn: async () => {
-      if (!address) {
-        const reason = "Wallet is not connected";
-
-        toast.error(reason);
-
-        throw new Error(reason);
-      }
-
-      const chain = somniaDevnet;
-
-      await ensuresChainWithFeedback(chain);
+      const { chain } = await ensuresChainAndAccountWithFeedback({});
 
       await ensureNftPaymentTokenBalanceWithFeedback({
         amount: totalMintPrice,

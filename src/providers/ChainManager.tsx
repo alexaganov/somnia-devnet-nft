@@ -1,7 +1,7 @@
 "use client";
 
 import { somniaDevnet } from "@/constants";
-import React, { ReactNode, useEffect, useState } from "react";
+import React, { ReactNode, useEffect, useRef, useState } from "react";
 import { useAccount, useDisconnect, useSwitchChain } from "wagmi";
 import {
   Dialog,
@@ -25,12 +25,14 @@ const ChainManager = ({ children }: { children?: ReactNode }) => {
   const [shouldSwitchChainInWallet, setShouldSwitchChainInWallet] =
     useState(false);
   const [currentChain] = useState(somniaDevnet);
+  const retriesRef = useRef(0);
 
   const { switchChainAsync } = useSwitchChain();
 
   // reset when user disconnects
   useEffect(() => {
     if (!address) {
+      retriesRef.current = 0;
       setShouldSwitchChainInWallet(false);
     }
   }, [address]);
@@ -59,6 +61,8 @@ const ChainManager = ({ children }: { children?: ReactNode }) => {
       ]);
 
       if (switchChainResult) {
+        toast.info("Chain switched to Somnia Devnet");
+
         return switchChainResult;
       }
 
@@ -67,18 +71,31 @@ const ChainManager = ({ children }: { children?: ReactNode }) => {
       try {
         await switchChainPromise;
 
+        toast.info("Chain switched to Somnia Devnet");
+
         setShouldSwitchChainInWallet(false);
       } catch (error) {
-        handleSwitchChain();
+        if (retriesRef.current < 3) {
+          retriesRef.current += 1;
+
+          handleSwitchChain();
+        }
 
         toast.error("Couldn't switch chain", {
           duration: Infinity,
           description: (
             <>
-              Error: {getWeb3ErrorMessage(error)}.
+              Error: {getWeb3ErrorMessage(error)}
               <br />
-              We've sent another request to your wallet. If nothing happens,
-              please try to disconnect and connect again.
+              {retriesRef.current >= 3 && (
+                <>Please try to disconnect and connect again.</>
+              )}
+              {retriesRef.current < 3 && (
+                <>
+                  We've sent another request to your wallet. If nothing happens,
+                  please try to disconnect and connect again.
+                </>
+              )}
             </>
           ),
         });

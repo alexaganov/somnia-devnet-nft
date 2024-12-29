@@ -20,7 +20,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
           toast: cn(
             "group right-2.5 items-start toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
             "group-[.toaster]:data-[type=success]:text-[--success-text]",
-            "group-[.toaster]:data-[type=error]:text-[--error-text]"
+            "group-[.toaster]:data-[type=error]:text-[--error-text]",
+            "group-[.toaster]:data-[type=info]:text-[--info-text]"
           ),
           description: "group-[.toast]:text-muted-foreground",
           icon: "mt-0.5",
